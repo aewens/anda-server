@@ -40,7 +40,6 @@ func OpenDatabase(config *Config) (*sql.DB) {
 		log.Println(err)
 		os.Exit(99)
 	}
-	defer db.Close()
 
 	return db
 }
@@ -71,6 +70,8 @@ func (server *Server) AddRoute(method string, route string, callback callback) {
 }
 
 func (server Server) Start() {
+	defer server.DB.Close()
+
 	// Start HTTP server
 	httpPort := fmt.Sprintf(":%d", server.Config.ApiPort)
 	fmt.Printf("Starting server on port %s\n", httpPort)
