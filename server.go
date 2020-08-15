@@ -1,11 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"os"
 	"log"
 	"net/http"
-	"database/sql"
+	"os"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -17,15 +17,15 @@ type routeMap map[string]Handler
 type routeMethodMap map[string]routeMap
 
 type Server struct {
-	Config	*Config
-	DB		*sql.DB
-	Router	*mux.Router
-	Routes	routeMethodMap
+	Config *Config
+	DB     *sql.DB
+	Router *mux.Router
+	Routes routeMethodMap
 }
 
 type callback func(*Server) Handler
 
-func OpenDatabase(config *Config) (*sql.DB) {
+func OpenDatabase(config *Config) *sql.DB {
 	var conn []string
 	conn = append(conn, fmt.Sprintf("host=%s", config.DBHost))
 	conn = append(conn, fmt.Sprintf("port=%s", config.DBPort))
@@ -36,7 +36,8 @@ func OpenDatabase(config *Config) (*sql.DB) {
 	//connection := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", config.DBUser,
 	//	config.DBPswd, config.DBHost, config.DBPort, config.DBName)
 
-	db, err := sql.Open("postgres", strings.Join(conn, " ")); if err != nil {
+	db, err := sql.Open("postgres", strings.Join(conn, " "))
+	if err != nil {
 		log.Println(err)
 		os.Exit(99)
 	}
@@ -44,7 +45,7 @@ func OpenDatabase(config *Config) (*sql.DB) {
 	return db
 }
 
-func CreateServer(config *Config) (*Server) {
+func CreateServer(config *Config) *Server {
 	db := OpenDatabase(config)
 	router := mux.NewRouter().StrictSlash(true)
 	routes := make(routeMethodMap)
@@ -55,7 +56,7 @@ func CreateServer(config *Config) (*Server) {
 
 	server := &Server{
 		Config: config,
-		DB: db,
+		DB:     db,
 		Router: router,
 		Routes: routes,
 	}
