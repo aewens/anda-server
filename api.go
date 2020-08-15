@@ -2,18 +2,17 @@ package main
 
 import (
 	"encoding/json"
-//	"encodeing/base64"
-//	"errors"
+	//	"encodeing/base64"
+	//	"errors"
 	"flag"
 	"fmt"
-//	"io/ioutil"
+	//	"io/ioutil"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"database/sql"
-	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -28,28 +27,14 @@ type Config struct {
 }
 
 type EAV struct {
-	UUID	string		`json:"uuid"`
-	Name	string		`json:"name"`
-	Type	string		`json:"type"`
-	Value	interface{}	`json:"value"`
+	UUID  string      `json:"uuid"`
+	Name  string      `json:"name"`
+	Type  string      `json:"type"`
+	Value interface{} `json:"value"`
+	Flag  int         `json:"flag"`
 }
 
 type EAVList []EAV
-
-var testEntries = EAVList{
-	{
-		UUID: "79d57376-2409-4610-b09a-6519cd72d7f0",
-		Name: "name",
-		Type: "byte",
-		Value: []byte{181, 235, 45},
-	},
-	{
-		UUID: "79d57376-2409-4610-b09a-6519cd72d7f0",
-		Name: "counter",
-		Type: "int",
-		Value: 1,
-	},
-}
 
 func cleanup() {
 	fmt.Println("Closing server")
@@ -177,68 +162,60 @@ func ReadConfig(path string) (*Config, error) {
 	return config, err
 }
 
-func EAVSelect(db *sql.DB, values map[string]string) (EAVList) {
+func EAVSelect(db *sql.DB) EAVList {
 	var entries EAVList
 
-	template := `
-		SELECT e.uuid, a.name, vt.name, $1.value
-		FROM $2 $1
-		INNER JOIN attribute a ON a.id = $1.attribute_id
-		INNER JOIN value_type vt ON vt.id = a.value_type_id
-		INNER JOIN entity e ON e.id = $1.entity_id
+	query := `
+		SELECT e.uuid, a.name, vt.name, convert_from(v.value, 'utf-8'), v.flag
+		FROM entity e
+		INNER JOIN value v ON v.entity_id = e.id
+		INNER JOIN attribute a ON a.id = v.attribute_id
+		INNER JOIN value_type vt ON vt.id = a.value_type_id;
 	`
-	for key, value := range values {
-		search := string([]byte(template))
-		search = strings.ReplaceAll(search, "$1", key)
-		search = strings.ReplaceAll(search, "$2", value)
-		//fmt.Println(search)
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Println(err)
+		os.Exit(5)
+	}
+	defer rows.Close()
 
-		rows, err := db.Query(search); if err != nil {
+	for rows.Next() {
+		var (
+			uuid  string
+			attr  string
+			vtype string
+			value interface{}
+			flag  int
+		)
+		err := rows.Scan(&uuid, &attr, &vtype, &value, &flag)
+		if err != nil {
 			log.Println(err)
-			os.Exit(5)
+			os.Exit(6)
 		}
-		defer rows.Close()
+		log.Println(uuid, attr, vtype, value, flag)
+		entries = append(entries, EAV{uuid, attr, vtype, value, flag})
+	}
 
-		for rows.Next() {
-			var (
-				uuid string
-				attr string
-				vtype string
-				value interface{}
-			)
-			err := rows.Scan(&uuid, &attr, &vtype, &value); if err != nil {
-				log.Println(err)
-				os.Exit(6)
-			}
-			log.Println(uuid, attr, vtype, value)
-			entries = append(entries, EAV{uuid, attr, vtype, value})
-		}
-
-		err = rows.Err(); if err != nil {
-			log.Println(err)
-			os.Exit(7)
-		}
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		os.Exit(7)
 	}
 
 	return entries
 }
 
-func Welcome(server *Server) (Handler) {
+func Welcome(server *Server) Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, world!")
 	}
 }
 
-func GetEntries(server *Server) (Handler) {
-	values := make(map[string]string)
-	values["vb"] = "value_byte"
-	values["vi"] = "value_int"
-
-	entries := EAVSelect(server.DB, values)
-	fmt.Println(entries)
+func GetEntries(server *Server) Handler {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(testEntries)
+		entries := EAVSelect(server.DB)
+		json.NewEncoder(w).Encode(entries)
 	}
 }
 
@@ -254,16 +231,19 @@ func main() {
 	HandleSigterm()
 
 	flags := ParseFlags()
-	configFlag, ok := flags["config"]; if !ok {
+	configFlag, ok := flags["config"]
+	if !ok {
 		log.Println("ERROR: Config flag is missing!")
 		os.Exit(3)
 	}
 
-	configPath, ok := configFlag.(string); if !ok {
+	configPath, ok := configFlag.(string)
+	if !ok {
 		log.Fatalf("Config flag is not a string: %v", configFlag)
 	}
 
-	config, err := ReadConfig(configPath); if err != nil {
+	config, err := ReadConfig(configPath)
+	if err != nil {
 		log.Println(err)
 		os.Exit(4)
 	}
