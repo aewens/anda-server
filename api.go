@@ -18,6 +18,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Config struct {
+	ApiPort int
+	DBHost  string
+	DBPort  string
+	DBUser  string
+	DBPswd  string
+	DBName  string
+}
+
 type EAV struct {
 	UUID	string		`json:"uuid"`
 	Name	string		`json:"name"`
@@ -46,13 +55,29 @@ func cleanup() {
 	fmt.Println("Closing server")
 }
 
-type Config struct {
-	ApiPort int
-	DBHost  string
-	DBPort  string
-	DBUser  string
-	DBPswd  string
-	DBName  string
+func HandleSigterm() {
+	sigterm := make(chan os.Signal)
+	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigterm
+		cleanup()
+		os.Exit(1)
+	}()
+}
+
+func ParseFlags() map[string]interface{} {
+	configFlag := flag.String("config", "", "Path to config file")
+	flag.Parse()
+
+	if len(*configFlag) == 0 {
+		log.Println("ERROR: Config flag is missing!")
+		os.Exit(2)
+	}
+
+	flags := make(map[string]interface{})
+	flags["config"] = *configFlag
+
+	return flags
 }
 
 func ReadConfig(path string) (*Config, error) {
@@ -152,51 +177,6 @@ func ReadConfig(path string) (*Config, error) {
 	return config, err
 }
 
-func Welcome(server *Server) (Handler) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello, world!")
-	}
-}
-
-func GetEntries(server *Server) (Handler) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(testEntries)
-	}
-}
-
-func StartServer(config *Config) {
-	server := CreateServer(config)
-	server.AddRoute("GET", "/api", Welcome)
-	server.AddRoute("GET", "/api/entries", GetEntries)
-
-	server.Start()
-}
-
-func HandleSigterm() {
-	sigterm := make(chan os.Signal)
-	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigterm
-		cleanup()
-		os.Exit(1)
-	}()
-}
-
-func ParseFlags() map[string]interface{} {
-	configFlag := flag.String("config", "", "Path to config file")
-	flag.Parse()
-
-	if len(*configFlag) == 0 {
-		log.Println("ERROR: Config flag is missing!")
-		os.Exit(2)
-	}
-
-	flags := make(map[string]interface{})
-	flags["config"] = *configFlag
-
-	return flags
-}
-
 func EAVSelect(db *sql.DB, values map[string]string) (EAVList) {
 	var entries EAVList
 
@@ -243,6 +223,33 @@ func EAVSelect(db *sql.DB, values map[string]string) (EAVList) {
 	return entries
 }
 
+func Welcome(server *Server) (Handler) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "Hello, world!")
+	}
+}
+
+func GetEntries(server *Server) (Handler) {
+	values := make(map[string]string)
+	values["vb"] = "value_byte"
+	values["vi"] = "value_int"
+
+	entries := EAVSelect(server.DB, values)
+	fmt.Println(entries)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(testEntries)
+	}
+}
+
+func StartServer(config *Config) {
+	server := CreateServer(config)
+	server.AddRoute("GET", "/api", Welcome)
+	server.AddRoute("GET", "/api/entries", GetEntries)
+
+	server.Start()
+}
+
 func main() {
 	HandleSigterm()
 
@@ -260,13 +267,6 @@ func main() {
 		log.Println(err)
 		os.Exit(4)
 	}
-
-	//values := make(map[string]string)
-	//values["vb"] = "value_byte"
-	//values["vi"] = "value_int"
-
-	//entries := EAVSelect(db, values)
-	//fmt.Println(entries)
 
 	StartServer(config)
 }
