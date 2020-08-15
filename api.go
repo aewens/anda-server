@@ -165,23 +165,11 @@ func GetEntries(server *Server) (Handler) {
 }
 
 func StartServer(config *Config) {
-	router := CreateRouter(config)
-	router.AddRoute("GET", "/api", Welcome)
-	router.AddRoute("GET", "/api/entries", GetEntries)
+	server := CreateServer(config)
+	server.AddRoute("GET", "/api", Welcome)
+	server.AddRoute("GET", "/api/entries", GetEntries)
 
-	router.Start()
-
-	//db := DatabaseOpen(config)
-
-	//// Setup routes for API
-	//router := mux.NewRouter().StrictSlash(true)
-	//router.HandleFunc("/api", Welcome)
-	//router.HandleFunc("/api/entries", GetEntries).Methods("GET")
-
-	//// Start HTTP server
-	//httpPort := fmt.Sprintf(":%d", config.ApiPort)
-	//fmt.Printf("Starting server on port %s\n", httpPort)
-	//log.Println(http.ListenAndServe(httpPort, router))
+	server.Start()
 }
 
 func HandleSigterm() {

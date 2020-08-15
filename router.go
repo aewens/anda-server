@@ -45,7 +45,7 @@ func OpenDatabase(config *Config) (*sql.DB) {
 	return db
 }
 
-func CreateRouter(config *Config) (*Server) {
+func CreateServer(config *Config) (*Server) {
 	db := OpenDatabase(config)
 	router := mux.NewRouter().StrictSlash(true)
 	routes := make(routeMethodMap)
