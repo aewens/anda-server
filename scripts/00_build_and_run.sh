@@ -7,7 +7,7 @@
 # Kill previous process
 if [ -f $3 ]; then
     PID=$(cat $3)
-    kill -9 $PID
+    kill -9 $PID 2>/dev/null
     if [ $? -ne 0 ]; then
         echo "PID $PID is not running"
         rm $3
