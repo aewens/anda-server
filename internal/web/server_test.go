@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	_ "github.com/lib/pq"
+
 	"github.com/aewens/anda/pkg/reading"
 )
 
@@ -84,19 +86,20 @@ func TestAddRoute(t *testing.T) {
 }
 
 func TestWelcome(t *testing.T) {
+	welcomeMethod := "GET"
+	welcomeRoute := "/api"
+	testServer.AddRoute(welcomeMethod, welcomeRoute, Welcome)
+
 	req, err := http.NewRequest("GET", "/api", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	welcomeMethod := "GET"
-	welcomeRoute := "/api"
-	testServer.AddRoute(welcomeMethod, welcomeRoute, Welcome)
-	handle := testServer.Routes[welcomeMethod][welcomeRoute]
-
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(handle)
-	handler.ServeHTTP(rr, req)
+	testServer.Router.ServeHTTP(rr, req)
+
+	rrBody := rr.Body
+	rrWelcome := rrBody.String()
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("/api status code '%v' instead of '%v'", status, http.StatusOK)
@@ -105,30 +108,28 @@ func TestWelcome(t *testing.T) {
 	testError := false
 	testName := "welcome"
 	testData := "Hello, world!"
-	template := "{\"error\":%t,\"name\":\"%s\",\"data\":\"%s\"}\n"
+	template := "{\"err\":%t,\"name\":\"%s\",\"data\":\"%s\"}\n"
 	testWelcome := fmt.Sprintf(template, testError, testName, testData)
 
-	rrWelcome := rr.Body
-
 	raw := make(map[string]interface{})
-	err = json.NewDecoder(rrWelcome).Decode(&raw)
+	err = json.NewDecoder(rrBody).Decode(&raw)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	rawError, ok := raw["error"]
+	rawError, ok := raw["err"]
 	if !ok {
-		t.Fatalf("Missing 'error'")
+		t.Fatalf("Missing 'error': %v", raw)
 	}
 
 	rawName, ok := raw["name"]
 	if !ok {
-		t.Fatalf("Missing 'name'")
+		t.Fatalf("Missing 'name': %v", raw)
 	}
 
 	rawData, ok := raw["data"]
 	if !ok {
-		t.Fatalf("Missing 'data'")
+		t.Fatalf("Missing 'data': %v", raw)
 	}
 
 	rrResponse := &Response{
@@ -153,7 +154,7 @@ func TestWelcome(t *testing.T) {
 		t.Errorf("For key 'Data' got '%v' instead of '%v'", rrData, testData)
 	}
 
-	if rrWelcome.String() != testWelcome {
+	if rrWelcome != testWelcome {
 		t.Errorf("/api returned '%v' instead of '%v'", rrWelcome, testWelcome)
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	_ "github.com/lib/pq"
+
 	"github.com/aewens/anda/internal/storage"
 )
 
