@@ -8,6 +8,7 @@
 test_*
 NOTES
 nginx.conf
+session
 
 ### Go ###
 # Binaries for programs and plugins
