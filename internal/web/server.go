@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/aewens/anda/internal/storage"
-	"github.com/aewens/anda/pkg/core"
+	"github.com/aewens/anda-server/internal/storage"
+	"github.com/aewens/anda-server/pkg/core"
 )
 
 type handler func(http.ResponseWriter, *http.Request)

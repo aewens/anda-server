@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/aewens/anda/internal/storage"
+	"github.com/aewens/anda-server/internal/storage"
 )
 
 func TestEntity(t *testing.T) {

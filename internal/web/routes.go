@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/aewens/anda/pkg/reading"
+	"github.com/aewens/anda-server/pkg/reading"
 )
 
 func Welcome(server *Server) *Response {

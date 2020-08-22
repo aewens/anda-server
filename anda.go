@@ -10,8 +10,8 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/aewens/anda/internal/web"
-	"github.com/aewens/anda/pkg/reading"
+	"github.com/aewens/anda-server/internal/web"
+	"github.com/aewens/anda-server/pkg/reading"
 )
 
 func cleanup() {

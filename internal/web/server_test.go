@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/aewens/anda/pkg/reading"
+	"github.com/aewens/anda-server/pkg/reading"
 )
 
 var testServer *Server

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aewens/anda/pkg/core"
+	"github.com/aewens/anda-server/pkg/core"
 )
 
 func Config(path string) (*core.Config, error) {

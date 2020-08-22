@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aewens/anda/pkg/core"
+	"github.com/aewens/anda-server/pkg/core"
 )
 
 func OpenPostgreSQL(config *core.Config) (*sql.DB, error) {

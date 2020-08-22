@@ -3,7 +3,7 @@ package reading
 import (
 	"database/sql"
 
-	"github.com/aewens/anda/pkg/core"
+	"github.com/aewens/anda-server/pkg/core"
 )
 
 func Entities(db *sql.DB) ([]core.SQLEntry, error) {
