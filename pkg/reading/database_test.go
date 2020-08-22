@@ -9,7 +9,7 @@ import (
 	"github.com/aewens/anda-server/internal/storage"
 )
 
-func TestEntity(t *testing.T) {
+func TestEntries(t *testing.T) {
 	configPath, ok := os.LookupEnv("CONFIG_PATH")
 	if !ok {
 		t.Fatal("Missing 'CONFIG_PATH' environment variable")
@@ -27,12 +27,12 @@ func TestEntity(t *testing.T) {
 	}
 
 	defer db.Close()
-	entities, err := Entities(db)
+	entries, err := Entries(db)
 	if err != nil {
-		t.Fatal("Could not obtain entities", err)
+		t.Fatal("Could not obtain entries", err)
 	}
 
-	if len(entities) == 0 {
-		t.Error("Did not find any entities")
+	if len(entries) == 0 {
+		t.Error("Did not find any entries")
 	}
 }

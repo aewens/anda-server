@@ -6,7 +6,7 @@ import (
 	"github.com/aewens/anda-server/pkg/core"
 )
 
-func Entities(db *sql.DB) ([]*core.SQLSelect, error) {
+func Entries(db *sql.DB) ([]*core.SQLSelect, error) {
 	var entries []*core.SQLSelect
 
 	// SELECT e.uuid, a.name, vt.name, convert_from(v.value, 'utf-8'), v.flag

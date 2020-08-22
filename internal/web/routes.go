@@ -14,7 +14,7 @@ func Welcome(server *Server) *Response {
 
 func GetEntries(server *Server) *Response {
 	name := "get-entries"
-	entries, err := reading.Entities(server.DB)
+	entries, err := reading.Entries(server.DB)
 
 	if err != nil {
 		return &Response{
