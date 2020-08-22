@@ -6,11 +6,12 @@ import (
 	"github.com/aewens/anda-server/pkg/core"
 )
 
-func Entities(db *sql.DB) ([]core.SQLEntry, error) {
-	var entries []core.SQLEntry
+func Entities(db *sql.DB) ([]*core.SQLSelect, error) {
+	var entries []*core.SQLSelect
 
+	// SELECT e.uuid, a.name, vt.name, convert_from(v.value, 'utf-8'), v.flag
 	query := `
-		SELECT e.uuid, a.name, vt.name, convert_from(v.value, 'utf-8'), v.flag
+		SELECT e.uuid, a.name, vt.name, v.value, v.flag
 		FROM entity e
 		INNER JOIN value v ON v.entity_id = e.id
 		INNER JOIN attribute a ON a.id = v.attribute_id
@@ -28,7 +29,7 @@ func Entities(db *sql.DB) ([]core.SQLEntry, error) {
 			uuid  string
 			name  string
 			vtype string
-			value interface{}
+			value []byte
 			flag  int
 		)
 		err := rows.Scan(&uuid, &name, &vtype, &value, &flag)
@@ -36,7 +37,7 @@ func Entities(db *sql.DB) ([]core.SQLEntry, error) {
 			return nil, err
 		}
 
-		entry := core.SQLEntry{
+		entry := &core.SQLSelect{
 			UUID:  uuid,
 			Name:  name,
 			Type:  vtype,

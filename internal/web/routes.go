@@ -27,6 +27,6 @@ func GetEntries(server *Server) *Response {
 	return &Response{
 		Error: false,
 		Name:  name,
-		Data:  entries,
+		Data:  &entries,
 	}
 }
