@@ -1,0 +1,11 @@
+{
+	"port": 15233, 
+	"database": {
+		"host": "0.0.0.0",
+		"port": "5432",
+		"user": "",
+		"password": "",
+		"name": ""
+	},
+	"api": "http://localhost:15233/api"
+}
