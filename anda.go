@@ -15,7 +15,13 @@ import (
 )
 
 func cleanup() {
+	r := recover()
+	if r != nil {
+		log.Println("[ERROR]:", r)
+		os.Exit(2)
+	}
 	fmt.Println("Closing server")
+	os.Exit(1)
 }
 
 func handleSigterm() {
@@ -24,7 +30,6 @@ func handleSigterm() {
 	go func() {
 		<-sigterm
 		cleanup()
-		os.Exit(1)
 	}()
 }
 
@@ -33,8 +38,7 @@ func parseFlags() map[string]interface{} {
 	flag.Parse()
 
 	if len(*configFlag) == 0 {
-		log.Println("ERROR: Config flag is missing!")
-		os.Exit(2)
+		panic("ERROR: Config flag is missing!")
 	}
 
 	flags := make(map[string]interface{})
@@ -44,30 +48,28 @@ func parseFlags() map[string]interface{} {
 }
 
 func main() {
+	defer cleanup()
 	handleSigterm()
 
 	flags := parseFlags()
 	configFlag, ok := flags["config"]
 	if !ok {
-		log.Println("ERROR: Config flag is missing!")
-		os.Exit(3)
+		panic("ERROR: Config flag is missing!")
 	}
 
 	configPath, ok := configFlag.(string)
 	if !ok {
-		log.Fatalf("Config flag is not a string: %v", configFlag)
+		panic(fmt.Sprintf("Config flag is not a string: %v", configFlag))
 	}
 
 	config, err := reading.Config(configPath)
 	if err != nil {
-		log.Println(err)
-		os.Exit(4)
+		panic(err)
 	}
 
 	server, err := web.Create(config)
 	if err != nil {
-		log.Println(err)
-		os.Exit(5)
+		panic(err)
 	}
 
 	server.AddRoute("GET", "/api", web.Welcome)
