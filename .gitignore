@@ -9,6 +9,7 @@ test_*
 NOTES
 nginx.conf
 session
+etc/config.json
 
 ### Go ###
 # Binaries for programs and plugins
